@@ -10,6 +10,8 @@ import role from "./modules/role"
 import manage from "./modules/manage"
 import cate from "./modules/cate"
 import spec from "./modules/spec"
+import goods from "./modules/goods"
+
 export default new Vuex.Store({
     state,
     mutations,
@@ -20,6 +22,7 @@ export default new Vuex.Store({
         role,
         manage,
         cate,
-        spec
+        spec,
+        goods
     }
 })

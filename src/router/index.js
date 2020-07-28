@@ -3,7 +3,12 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
-export default new Router({
+
+// 路由独享
+function havePower(url){
+  return store.state.user.menus_url.some(i=>i==url)
+}
+let router= new Router({
   routes: [
     
     {
@@ -77,3 +82,6 @@ export default new Router({
     },
   ]
 })
+
+
+export default router;

@@ -15,8 +15,10 @@
 <script>
 import { requestLogin } from "../../util/request";
 import { successAlert, warningAlert } from "../../util/alert";
+import {mapActions} from "vuex"
 export default {
   components: {},
+  
   data() {
     return {
       user: {
@@ -26,10 +28,19 @@ export default {
     };
   },
   methods: {
+    ...mapActions({
+      "changeUser":"changeUser"
+    }),
     login() {
       // this.$router.push("/");
       requestLogin(this.user).then((res) => {
-        console.log("111");
+      //   if(res.data.code===200){
+      //     successAlert(res.data.msg);
+      //     this.changeUser(res.data.list)
+      //     this.$router.push("/home")
+      //   }else{
+      //     warningAlert(res.data.msg)
+      //   }
       });
     },
   },

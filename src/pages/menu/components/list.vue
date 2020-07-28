@@ -77,6 +77,17 @@ export default {
       });
     },
   },
+  //封装删除
+    dele(id) {
+      requestMenuDelete({ id: id }).then((res) => {
+        if (res.data.code == 200) {
+          successAlert(res.data.msg);
+          this.requestList();
+        } else {
+          warningAlert(res.data.msg);
+        }
+      });
+    },
   mounted() {
     this.requestList();
   },

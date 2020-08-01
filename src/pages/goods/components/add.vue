@@ -1,8 +1,8 @@
 <template>
   <div class="add">
     <el-dialog :title="info.title" :visible.sync="info.show" @opened="createEditor">
-      <el-form :model="form">
-        <el-form-item label="一级分类" label-width="80px">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="一级分类" prop="first_cateid" label-width="80px">
           <el-select v-model="form.first_cateid" @change="changeFirstCateId()">
             <el-option label="请选择" value disabled></el-option>
             <!-- 动态数据 -->
@@ -14,7 +14,7 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="二级分类" label-width="80px">
+        <el-form-item label="二级分类" prop="second_cateid" label-width="80px">
           <el-select v-model="form.second_cateid">
             <el-option label="请选择" value disabled></el-option>
             <!-- 动态数据 -->
@@ -27,7 +27,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="商品名称" label-width="80px">
+        <el-form-item label="商品名称" prop="goodsname" label-width="80px">
           <el-input v-model="form.goodsname"></el-input>
         </el-form-item>
         <el-form-item label="价格" label-width="80px">
@@ -47,7 +47,7 @@
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
         </el-form-item>
-        <el-form-item label="商品规格" label-width="80px">
+        <el-form-item label="商品规格" prop="specsid" label-width="80px">
           <el-select v-model="form.specsid" @change="changeSpecsId()">
             <el-option label="请选择" value disabled></el-option>
             <el-option
@@ -58,9 +58,9 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="规格属性" label-width="80px">
+        <el-form-item label="规格属性" prop="specsattr" label-width="80px">
           <el-select v-model="form.specsattr" multiple>
-            <el-option label="请选择" value></el-option>
+            <el-option label="请选择" value disabled=""></el-option>
             <!-- 动态数据 -->
             <el-option v-for="item in attrsArr" :key="item" :label="item" :value="item"></el-option>
           </el-select>
@@ -84,8 +84,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel()">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -93,8 +93,8 @@
 <script>
 import { mapGetters, mapActions } from "vuex";
 import { successAlert, warningAlert } from "../../../util/alert";
-import { requestGoodsAdd } from "../../../util/request";
-import E from "wangeditor"
+import { requestGoodsAdd, requestGoodsDetail } from "../../../util/request";
+import E from "wangeditor";
 export default {
   props: ["info"],
   components: {},
@@ -108,6 +108,26 @@ export default {
   },
   data() {
     return {
+      //表单验证
+      rules: {
+        goodsname: [
+          { required: true, message: "请输入商品名称", trigger: "blur" },
+          { min: 2, max: 5, message: "长度在 2 到 5 个字符", trigger: "blur" },
+        ],
+        first_cateid: [
+          { required: true, message: "请选择上级菜单", trigger: "change" },
+        ],
+        second_cateid: [
+          { required: true, message: "请选择上级菜单", trigger: "change" },
+        ],
+        specsid: [
+          { required: true, message: "请选择上级菜单", trigger: "change" },
+        ],
+        specsattr: [
+          { required: true, message: "请选择上级菜单", trigger: "change" },
+        ],
+      },
+
       //编辑器对象
       editor: null,
       //二级分类的数组
@@ -179,24 +199,30 @@ export default {
     },
 
     //  添加
-    add() {
-      this.form.description = this.editor.txt.html();
-      this.form.specsattr = JSON.stringify(this.form.specsattr);
-    console.log(this.form);
-      requestGoodsAdd(this.form).then((res) => {
-
-        if (res.data.code == 200) {
-          successAlert(res.data.msg);
-          // 重置form
-          this.empty();
-          // 弹框消失
-          this.cancel();
-          // 重新获取列表数据
-          this.requestGoodsCount();
-          // 重新获取总的数量
-          this.requestGoodsList();
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          this.form.description = this.editor.txt.html();
+          this.form.specsattr = JSON.stringify(this.form.specsattr);
+          console.log(this.form);
+          requestGoodsAdd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert(res.data.msg);
+              // 重置form
+              this.empty();
+              // 弹框消失
+              this.cancel();
+              // 重新获取列表数据
+              this.requestGoodsCount();
+              // 重新获取总的数量
+              this.requestGoodsList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -249,18 +275,25 @@ export default {
       });
     },
     //点击了修改
-    update() {
-      this.form.description = this.editor.txt.html();
-      this.form.specsattr = JSON.stringify(this.form.specsattr);
+    update(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          this.form.description = this.editor.txt.html();
+          this.form.specsattr = JSON.stringify(this.form.specsattr);
 
-      requestGoodsUpdate(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert("修改成功");
-          this.empty();
-          this.cancel();
-          this.requestList();
+          requestGoodsUpdate(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert("修改成功");
+              this.empty();
+              this.cancel();
+              this.requestList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -314,5 +347,4 @@ export default {
   height: 178px;
   display: block;
 }
-
 </style>

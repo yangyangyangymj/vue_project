@@ -1,8 +1,8 @@
 <template>
   <div>
     <el-dialog :title="info.title" :visible.sync="info.show">
-      <el-form :model="form">
-        <el-form-item label="所属角色" label-width="80px">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="所属角色" prop="roleid" label-width="80px">
           <el-select v-model="form.roleid">
             <el-option label="--请选择--" value disabled></el-option>
             <!-- 动态数据 -->
@@ -14,7 +14,7 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="用户名" label-width="80px">
+        <el-form-item label="用户名" prop="username" label-width="80px">
           <el-input v-model="form.username"></el-input>
         </el-form-item>
         <el-form-item label="密码" label-width="80px">
@@ -26,8 +26,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel()">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -51,9 +51,19 @@ export default {
   },
   data() {
     return {
+      //表单验证
+      rules: {
+        username: [
+          { required: true, message: "请输入用户名", trigger: "blur" },
+          { min: 3, max: 5, message: "长度在 3 到 5 个字符", trigger: "blur" },
+        ],
+        roleid: [
+          { required: true, message: "请选择上级菜单", trigger: "change" },
+        ],
+      },
       //  提交给后端的数据
       form: {
-        roleid:"",
+        roleid: "",
         username: "",
         password: "",
         status: 1,
@@ -64,13 +74,13 @@ export default {
     ...mapActions({
       requestRoleList: "role/requestList",
       requestManageList: "manage/requestList",
-      requestTotal:"manage/requestTotal"
+      requestTotal: "manage/requestTotal",
     }),
     // 重置内容
     empty() {
       this.form = {
         rolename: "",
-        password:"",
+        password: "",
         status: 1,
       };
     },
@@ -81,21 +91,28 @@ export default {
       }
     },
     //点击了添加按钮
-    add() {
-      // 发起添加角色的请求
-      requestManageAdd(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert(res.data.msg);
-          //重置form数据
-          this.empty();
-          //弹框消失
-          this.cancel();
-          //再次请求角色list数据
-          this.requestManageList();
-          // 重新获取总数量
-          this.requestTotal()
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          // 发起添加角色的请求
+          requestManageAdd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert(res.data.msg);
+              //重置form数据
+              this.empty();
+              //弹框消失
+              this.cancel();
+              //再次请求角色list数据
+              this.requestManageList();
+              // 重新获取总数量
+              this.requestTotal();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -103,19 +120,26 @@ export default {
     getDetail(id) {
       requestManageDetail({ uid: id }).then((res) => {
         this.form = res.data.list;
-        this.form.password=""
+        this.form.password = "";
       });
     },
     //修改
-    update() {
-      requestManageUpdate(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert("修改成功");
-          this.empty();
-          this.cancel();
-          this.requestManageList();
+    update(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          requestManageUpdate(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert("修改成功");
+              this.empty();
+              this.cancel();
+              this.requestManageList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },

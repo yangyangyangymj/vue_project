@@ -1,8 +1,8 @@
 <template>
   <div class="add">
     <el-dialog :title="info.title" :visible.sync="info.show">
-      <el-form :model="form">
-        <el-form-item label="规格名称" label-width="80px">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="规格名称" prop="specsname" label-width="80px">
           <el-input v-model="form.specsname"></el-input>
         </el-form-item>
         <el-form-item v-for="(item,index) in attrArr" :key="index" label="规格属性" label-width="80px">
@@ -17,8 +17,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel()">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -41,6 +41,13 @@ export default {
   },
   data() {
     return {
+      //表单验证
+      rules: {
+        specsname: [
+          { required: true, message: "请输入规格名称", trigger: "blur" },
+          { min: 2, max: 5, message: "长度在 2 到 5 个字符", trigger: "blur" },
+        ],
+      },
       attrArr: [
         {
           value: "",
@@ -55,12 +62,9 @@ export default {
       },
     };
   },
-  mounted() {
-   
-  },
+  mounted() {},
   methods: {
     ...mapActions({
-      
       requestList: "spec/requestList",
       requestTotal: "spec/requestTotal",
     }),
@@ -97,27 +101,36 @@ export default {
       }
     },
     //添加
-    add() {
-      if (this.attrArr.some((item) => item.value == "")) {
-        warningAlert("属性规格均不能为空");
-        return;
-      }
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          if (this.attrArr.some((item) => item.value == "")) {
+            warningAlert("属性规格均不能为空");
+            return;
+          }
 
-      this.form.attrs = JSON.stringify(this.attrArr.map((item) => item.value));
-      //发起添加请求
-      requestSpecAdd(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert(res.data.msg);
-          //清空
-          this.empty();
-          //弹框消失
-          this.cancel();
-          //重新获取角色列表数据
-          this.requestTotal();
-          //重新获取总的数量
-          this.requestTotal();
+          this.form.attrs = JSON.stringify(
+            this.attrArr.map((item) => item.value)
+          );
+          //发起添加请求
+          requestSpecAdd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert(res.data.msg);
+              //清空
+              this.empty();
+              //弹框消失
+              this.cancel();
+              //重新获取角色列表数据
+              this.requestTotal();
+              //重新获取总的数量
+              this.requestTotal();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -132,21 +145,30 @@ export default {
       });
     },
     //点击了修改
-    update() {
-       if (this.attrArr.some((item) => item.value == "")) {
-        warningAlert("属性规格均不能为空");
-        return;
-      }
+    update(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          if (this.attrArr.some((item) => item.value == "")) {
+            warningAlert("属性规格均不能为空");
+            return;
+          }
 
-      this.form.attrs = JSON.stringify(this.attrArr.map((item) => item.value));
-      requestSpecUpdate(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert("修改成功");
-          this.empty();
-          this.cancel();
-          this.requestList();
+          this.form.attrs = JSON.stringify(
+            this.attrArr.map((item) => item.value)
+          );
+          requestSpecUpdate(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert("修改成功");
+              this.empty();
+              this.cancel();
+              this.requestList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },

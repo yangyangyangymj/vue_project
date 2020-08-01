@@ -1,8 +1,8 @@
 <template>
   <div class="add">
     <el-dialog :title="info.title" :visible.sync="info.show">
-      <el-form :model="form">
-        <el-form-item label="上级分类" label-width="80px">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="上级分类" prop="pid" label-width="80px">
           <el-select v-model="form.pid">
             <el-option label="--请选择--" value disabled></el-option>
             <el-option label="顶级分类" :value="0"></el-option>
@@ -11,7 +11,7 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="分类名称" label-width="80px">
+        <el-form-item label="分类名称" prop="catename" label-width="80px">
           <el-input v-model="form.catename" autocomplete="off"></el-input>
         </el-form-item>
 
@@ -30,8 +30,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel()">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>修 改</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>修 改</el-button>
       </div>
     </el-dialog>
   </div>
@@ -55,6 +55,15 @@ export default {
   },
   data() {
     return {
+//表单验证
+      rules: {
+        catename: [
+          { required: true, message: "请输入分类名称", trigger: "blur" },
+          { min: 3, max: 5, message: "长度在 3 到 5 个字符", trigger: "blur" },
+        ],
+        pid: [{ required: true, message: "请选择上级菜单", trigger: "change" }],
+      },
+
       //上传完成的时候图片的地址
       imageUrl: "",
 
@@ -135,8 +144,10 @@ export default {
       }
     },
     //点击了添加按钮
-    add() {
-      requestCateAdd(this.form).then((res) => {
+    add(form) {
+      this.$refs[form].validate((valid) => {
+          if (valid) {
+            requestCateAdd(this.form).then((res) => {
         if (res.data.code == 200) {
           successAlert(res.data.msg);
           //重置form数据
@@ -149,6 +160,12 @@ export default {
           warningAlert(res.data.msg);
         }
       });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      
     },
     //获取某一条数据
     getDetail(id) {
@@ -159,8 +176,10 @@ export default {
       });
     },
     //修改
-    update() {
-      requestCateUpdate(this.form).then((res) => {
+    update(form) {
+      this.$refs[form].validate((valid) => {
+          if (valid) {
+             requestCateUpdate(this.form).then((res) => {
         if (res.data.code == 200) {
           successAlert(res.data.msg);
           this.empty();
@@ -170,6 +189,12 @@ export default {
           warningAlert(res.data.msg);
         }
       });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+     
     },
   },
   mounted() {},

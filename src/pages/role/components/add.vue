@@ -1,8 +1,8 @@
 <template>
   <div>
     <el-dialog :title="info.title" :visible.sync="info.show">
-      <el-form :model="form">
-        <el-form-item label="角色名称" label-width="80px">
+      <el-form :model="form" :rules="rules" ref="form">
+        <el-form-item label="角色名称" prop="rolename" label-width="80px">
           <el-input v-model="form.rolename" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="角色权限" label-width="80px">
@@ -21,8 +21,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel()">取 消</el-button>
-        <el-button type="primary" @click="add" v-if="info.isAdd">添 加</el-button>
-        <el-button type="primary" @click="update" v-else>添 加</el-button>
+        <el-button type="primary" @click="add('form')" v-if="info.isAdd">添 加</el-button>
+        <el-button type="primary" @click="update('form')" v-else>添 加</el-button>
       </div>
     </el-dialog>
   </div>
@@ -46,6 +46,14 @@ export default {
   },
   data() {
     return {
+      //表单验证
+      rules: {
+        rolename: [
+          { required: true, message: "请输入角色名称", trigger: "blur" },
+          { min: 2, max: 5, message: "长度在 2 到 5 个字符", trigger: "blur" },
+        ],
+        pid: [{ required: true, message: "请选择上级菜单", trigger: "change" }],
+      },
       //  提交给后端的数据
       form: {
         rolename: "",
@@ -81,21 +89,28 @@ export default {
       }
     },
     //点击了添加按钮
-    add() {
-      // 获取tree的key赋值给form.menus
-      this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
-      // 发起添加角色的请求
-      requestRoleAdd(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert(res.data.list);
-          //重置form数据
-          this.empty();
-          //弹框消失
-          this.cancel();
-          //再次请求list数据
-          this.requestRoleList();
+    add(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          // 获取tree的key赋值给form.menus
+          this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
+          // 发起添加角色的请求
+          requestRoleAdd(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert(res.data.list);
+              //重置form数据
+              this.empty();
+              //弹框消失
+              this.cancel();
+              //再次请求list数据
+              this.requestRoleList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },
@@ -108,17 +123,24 @@ export default {
       });
     },
     //修改
-    update() {
-      // 获取tree 的key赋值给form.menus
-      this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
-      requestRoleUpdate(this.form).then((res) => {
-        if (res.data.code == 200) {
-          successAlert(res.data.msg);
-          this.empty();
-          this.cancel();
-          this.requestRoleList();
+    update(form) {
+      this.$refs[form].validate((valid) => {
+        if (valid) {
+          // 获取tree 的key赋值给form.menus
+          this.form.menus = JSON.stringify(this.$refs.tree.getCheckedKeys());
+          requestRoleUpdate(this.form).then((res) => {
+            if (res.data.code == 200) {
+              successAlert(res.data.msg);
+              this.empty();
+              this.cancel();
+              this.requestRoleList();
+            } else {
+              warningAlert(res.data.msg);
+            }
+          });
         } else {
-          warningAlert(res.data.msg);
+          console.log("error submit!!");
+          return false;
         }
       });
     },

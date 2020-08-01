@@ -4,7 +4,7 @@
     <!-- 添加弹框 -->
     <v-add :info="info" ref="add"></v-add>
     <!-- 列表 -->
-    <v-list @click="edit($event)"></v-list>
+    <v-list @edit="edit($event)"></v-list>
 </div>
 </template>
 <script>
@@ -36,6 +36,7 @@ methods:{
     edit(id){
         this.info.show=true;
         this.info.title="编辑商品",
+      this.info.isAdd = false;
         this.$refs.add.getDetail(id);
     }
 },

@@ -1,16 +1,34 @@
 import axios from 'axios'
 import qs from 'qs'
+import store from "../store"
+import {warningAlert} from "./alert"
+import router from "../router"
 
+//请求拦截
+axios.interceptors.request.use(config => {
+    if (config.url != baseUrl + '/api/userlogin') {
+        config.headers.authorization = store.state.user.token;
+    }
+    return config
+})
 // 响应拦截
 axios.interceptors.response.use(res => {
     console.group("本次路径" + res.config.url)
     console.log(res)
     console.groupEnd()
+    
+    if(res.data.msg==="登录已过期或访问权限受限"){
+        warningAlert("登录已过期或访问权限受限")
+        router.push("/login");
+        return;
+    }
     return res;
 })
 
 const baseUrl = "/api"
 
+
+// ==================菜单管理====================
 // 菜单添加
 export const requestMenuAdd = (params) => {
     return axios({
@@ -53,6 +71,8 @@ export const requestMenuDelete = params => {
     })
 }
 
+// ==============角色管理=======================
+
 // 角色添加
 export const requestRoleAdd = (params) => axios({
     url: baseUrl + "/api/roleadd",
@@ -87,6 +107,7 @@ export const requestRoleDelete = params => axios({
     data: qs.stringify(params)
 })
 
+// ================管理员管理=====================
 
 // 管理员添加
 export const requestManageAdd = params => axios({
@@ -123,12 +144,18 @@ export const requestManageDelete = (params) => axios({
     method: "post",
     data: qs.stringify(params)
 })
+
+
+// =====================登录=====================
 // 登录
 export const requestLogin = params => axios({
     url: baseUrl + "/api/userlogin",
     method: "post",
     data: qs.stringify(params)
 })
+
+
+// ================商品分类==============
 
 //分类添加
 export const requestCateAdd = (params) => {
@@ -181,7 +208,7 @@ export const requestCateDelete = params => {
     })
 }
 
-
+// =============商品规格=====================
 
 //商品规格添加
 export const requestSpecAdd = (params) => {
@@ -235,7 +262,7 @@ export const requestSpecDelete = params => {
 }
 
 
-
+// =================商品管理======================
 
 // 商品添加
 export const requestGoodsAdd = (params) => {
@@ -296,3 +323,123 @@ export const requestGoodsDelete = params => {
 }
 
 
+// ======================会员管理==================
+
+// 会员列表
+export const requestMemberList = (params) => axios({
+    url: baseUrl + "/api/memberlist",
+    method: "get",
+    params
+})
+// 会员获取一条
+export const requestMemberDetail = (params) => axios({
+    url: baseUrl + "/api/memberinfo",
+    method: "get",
+    params
+})
+// 会员修改
+export const requestMemberUpdate = (params) => axios({
+    url: baseUrl + "/api/memberedit",
+    method: "post",
+    data: qs.stringify(params)
+})
+
+// =================轮播图管理======================
+
+// 轮播图添加
+export const requestBannerAdd = (params) => {
+    let formData = new FormData()
+    for (let i in params) {
+        formData.append(i, params[i])
+    }
+    return axios({
+        url: baseUrl + "/api/banneradd",
+        method: 'post',
+        data: formData
+    })
+}
+//轮播图列表
+
+export const requestBannerList = (params) => {
+    return axios({
+        url: baseUrl + "/api/bannerlist",
+        method: "get",
+        params: params
+    })
+}
+
+//轮播图某一个条数据
+export const requestBannerDetail = params => {
+    return axios({
+        url: baseUrl + "/api/bannerinfo",
+        method: "get",
+        params
+    })
+}
+//轮播图修改
+export const requestBannerUpdate = params => {
+    let formData = new FormData()
+    for (let i in params) {
+        formData.append(i, params[i])
+    }
+    return axios({
+        url: baseUrl + "/api/banneredit",
+        method: "post",
+        data: formData
+    })
+}
+
+//轮播图删除
+export const requestBannerDelete = params => {
+    return axios({
+        url: baseUrl + "/api/bannerdelete",
+        method: "post",
+        data: qs.stringify(params)
+    })
+}
+
+// ================限时秒杀==============
+
+//秒杀添加
+export const requestSeckillAdd = (params) => {
+    return axios({
+        url: baseUrl + "/api/seckadd",
+        method: "post",
+        data: qs.stringify(params)
+    })
+}
+// //秒杀列表
+export const requestSeckillList = (params) => {
+    return axios({
+        url: baseUrl + "/api/secklist",
+        method: "get",
+        params: params
+    })
+}
+
+// //秒杀某一个条数据
+export const requestSeckillDetail = params => {
+    return axios({
+        url: baseUrl + "/api/seckinfo",
+        method: "get",
+        params
+    })
+}
+// //秒杀修改
+export const requestSeckillUpdate = params => {
+
+    return axios({
+        url: baseUrl + "/api/seckedit",
+        method: "post",
+        data: qs.stringify(params)
+    })
+}
+
+// //秒杀删除
+export const requestSeckillDelete = params => {
+    return axios({
+        url: baseUrl + "/api/seckdelete",
+        method: "post",
+        data: qs.stringify(params)
+    })
+}

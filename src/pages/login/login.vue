@@ -1,53 +1,55 @@
 <template>
-  <div>
-    <div class="login">
-      <div class="con">
-        <h3>登录</h3>
-        <el-input v-model="user.username" class="input" clearable></el-input>
-        <el-input v-model="user.password" class="input" clearable show-password></el-input>
-        <div class="btn-box">
-          <el-button type="primary" @click="login">登录</el-button>
-        </div>
+  <div class="login">
+    <div class="con">
+      <h3>登录</h3>
+      <el-input v-model="user.username" class="input" clearable></el-input>
+      <el-input v-model="user.password" class="input" clearable show-password></el-input>
+      <div class="btn-box">
+        <el-button type="primary" @click="login">登录</el-button>
       </div>
     </div>
   </div>
 </template>
 <script>
-import { requestLogin } from "../../util/request";
-import { successAlert, warningAlert } from "../../util/alert";
+import {requestLogin} from "../../util/request"
+import {successAlert,warningAlert} from "../../util/alert"
 import {mapActions} from "vuex"
 export default {
   components: {},
-  
   data() {
     return {
-      user: {
-        username: "",
-        password: "",
-      },
+      user:{
+        username:"",
+        password:""
+      }
     };
   },
   methods: {
     ...mapActions({
       "changeUser":"changeUser"
     }),
-    login() {
-      // this.$router.push("/");
-      requestLogin(this.user).then((res) => {
-      //   if(res.data.code===200){
-      //     successAlert(res.data.msg);
-      //     this.changeUser(res.data.list)
-      //     this.$router.push("/home")
-      //   }else{
-      //     warningAlert(res.data.msg)
-      //   }
-      });
-    },
+      login(){
+          // this.$router.push("/home")
+          requestLogin(this.user).then(res=>{
+          // console.log(111)
+
+            if(res.data.code===200){
+          //     //登录成功
+              successAlert("登录成功")
+          //     //vuex保存了用户信息
+              this.changeUser(res.data.list)
+          //     //跳转页面
+              this.$router.push("/home")
+            }else{
+              warningAlert(res.data.msg)
+            }
+          })
+      }
   },
   mounted() {},
 };
 </script>
-<style>
+<style scoped>
 .login {
   width: 100vw;
   height: 100vh;
